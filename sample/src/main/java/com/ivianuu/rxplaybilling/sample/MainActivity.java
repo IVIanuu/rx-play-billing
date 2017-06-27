@@ -23,19 +23,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         rxPlayBilling = new RxPlayBilling(this);
-
-        rxPlayBilling.connect()
-                .subscribe(new Consumer<Boolean>() {
-                    @Override
-                    public void accept(@NonNull Boolean aBoolean) throws Exception {
-
-                    }
-                }, new Consumer<Throwable>() {
-                    @Override
-                    public void accept(@NonNull Throwable throwable) throws Exception {
-
-                    }
-                });
     }
 
     @Override
