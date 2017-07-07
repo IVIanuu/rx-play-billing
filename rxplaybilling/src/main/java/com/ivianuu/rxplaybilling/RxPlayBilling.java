@@ -30,6 +30,9 @@ public class RxPlayBilling {
     private BillingClient billingClient;
     private PublishSubject<PurchaseUpdate> purchaseUpdatesSubject = PublishSubject.create();
 
+    /**
+     * Instantiates a rx play billing instance
+     */
     public RxPlayBilling(@NonNull Context context) {
         billingClient = new BillingClient.Builder(context)
                 .setListener(purchasesUpdatedListener)
