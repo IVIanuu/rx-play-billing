@@ -22,13 +22,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        rxPlayBilling = new RxPlayBilling(this);
+        rxPlayBilling = RxPlayBilling.getInstance(this);
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        // clean up
-        rxPlayBilling.disconnect();
-    }
 }

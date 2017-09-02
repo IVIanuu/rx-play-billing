@@ -2,199 +2,215 @@ package com.ivianuu.rxplaybilling;
 
 import android.app.Activity;
 import android.content.Context;
+import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
 
 import com.android.billingclient.api.BillingClient;
-import com.android.billingclient.api.BillingClientStateListener;
 import com.android.billingclient.api.BillingFlowParams;
-import com.android.billingclient.api.ConsumeResponseListener;
 import com.android.billingclient.api.Purchase;
-import com.android.billingclient.api.PurchaseHistoryResponseListener;
 import com.android.billingclient.api.PurchasesUpdatedListener;
+import com.ivianuu.rxplaybilling.model.ConsumeResponse;
+import com.ivianuu.rxplaybilling.model.PurchaseUpdate;
+import com.ivianuu.rxplaybilling.singles.ConsumeSingle;
+import com.ivianuu.rxplaybilling.singles.QueryPurchaseHistorySingle;
+import com.ivianuu.rxplaybilling.singles.QueryPurchasesNetworkSingle;
+import com.ivianuu.rxplaybilling.singles.QueryPurchasesSingle;
+import com.ivianuu.rxplaybilling.singles.StartConnectionSingle;
 
 import java.util.List;
 
 import io.reactivex.Observable;
-import io.reactivex.ObservableEmitter;
-import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.Single;
-import io.reactivex.SingleEmitter;
-import io.reactivex.SingleOnSubscribe;
+import io.reactivex.SingleSource;
+import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
 import io.reactivex.subjects.PublishSubject;
 
 /**
  * Wraps a BillingClient
  */
-public class RxPlayBilling {
+public final class RxPlayBilling {
+
+    private static RxPlayBilling instance;
 
     private BillingClient billingClient;
     private PublishSubject<PurchaseUpdate> purchaseUpdatesSubject = PublishSubject.create();
 
-    /**
-     * Instantiates a rx play billing instance
-     */
-    public RxPlayBilling(@NonNull Context context) {
+    private RxPlayBilling(@NonNull Context context) {
         billingClient = new BillingClient.Builder(context)
-                .setListener(purchasesUpdatedListener)
+                .setListener(new PurchasesUpdatedListener() {
+                    @Override
+                    public void onPurchasesUpdated(int responseCode, List<Purchase> purchases) {
+                        purchaseUpdatesSubject.onNext(new PurchaseUpdate(purchases, responseCode));
+                    }
+                })
                 .build();
+    }
+
+    /**
+     * Returns the RxPlayBilling instance
+     */
+    @NonNull
+    public static RxPlayBilling getInstance(@NonNull Context context) {
+        if (instance == null) {
+            instance = new RxPlayBilling(context.getApplicationContext());
+        }
+
+        return instance;
     }
 
     /**
      * Check if specified feature or capability is supported by the Play Store.
      */
     @BillingClient.BillingResponse
-    public int isFeatureSupported(@NonNull @BillingClient.FeatureType String feature) {
-        throwIfNotReady();
-        return billingClient.isFeatureSupported(feature);
-    }
-
-    /**
-     * Checks if the client is currently connected to the service, so that requests to other methods
-     * will succeed.
-     */
-    public boolean isReady() {
-        return billingClient.isReady();
-    }
-
-    /**
-     * Connects to the billing service
-     * Observable emits on connection changes true means connected false disconnected
-     */
-    @NonNull
-    public Observable<Boolean> connect() {
-        return Observable.create(new ObservableOnSubscribe<Boolean>() {
-            @Override
-            public void subscribe(@io.reactivex.annotations.NonNull final ObservableEmitter<Boolean> e) throws Exception {
-                billingClient.startConnection(new BillingClientStateListener() {
+    @CheckResult @NonNull
+    public Single<Integer> isFeatureSupported(@NonNull @BillingClient.FeatureType final String feature) {
+        return connect()
+                .map(new Function<Integer, Integer>() {
                     @Override
-                    public void onBillingSetupFinished(int resultCode) {
+                    public Integer apply(Integer resultCode) throws Exception {
                         if (resultCode == BillingClient.BillingResponse.OK) {
-                            e.onNext(true);
-                        } else {
-                            e.onError(new Throwable(String.valueOf(resultCode)));
+                            return billingClient.isFeatureSupported(feature);
                         }
-                    }
 
-                    @Override
-                    public void onBillingServiceDisconnected() {
-                        if (!e.isDisposed()) {
-                            e.onNext(false);
-                        }
-                    }
+                        throw new BillingException(resultCode);
+                    };
                 });
-            }
-        });
-    }
-
-    /**
-     * Close the connection and release all held resources such as service connections.
-     */
-    public void disconnect() {
-        billingClient.endConnection();
     }
 
     /**
      * Initiate the UI flow for an in-app purchase or subscription.
      */
     @BillingClient.BillingResponse
-    public int launchBillingFlow(@NonNull Activity activity, @NonNull BillingFlowParams billingFlowParams) {
-        throwIfNotReady();
-        return billingClient.launchBillingFlow(activity, billingFlowParams);
+    @CheckResult @NonNull
+    public Single<Integer> launchBillingFlow(@NonNull final Activity activity, @NonNull final BillingFlowParams billingFlowParams) {
+        return connect()
+                .doOnSuccess(new Consumer<Integer>() {
+                    @Override
+                    public void accept(Integer resultCode) throws Exception {
+                        if (resultCode == BillingClient.BillingResponse.OK) {
+                            billingClient.launchBillingFlow(activity, billingFlowParams);
+                        }
+
+                        throw new BillingException(resultCode);
+                    }
+                });
     }
 
     /**
      * Perform a network query to get SKU details and return the result asynchronously.
      */
-    @NonNull
-    public Purchase.PurchasesResult queryPurchases(@NonNull @BillingClient.SkuType String skuType) {
-        throwIfNotReady();
-        return billingClient.queryPurchases(skuType);
+    @CheckResult @NonNull
+    public Single<Purchase.PurchasesResult> queryPurchases(@NonNull @BillingClient.SkuType final String skuType) {
+        return connect()
+                .doOnSuccess(new Consumer<Integer>() {
+                    @Override
+                    public void accept(Integer resultCode) throws Exception {
+                        if (resultCode != BillingClient.BillingResponse.OK) {
+                            throw new BillingException(resultCode);
+                        }
+                    }
+                })
+                .flatMap(new Function<Integer, SingleSource<Purchase.PurchasesResult>>() {
+                    @Override
+                    public SingleSource<Purchase.PurchasesResult> apply(Integer __) throws Exception {
+                        return QueryPurchasesSingle.create(billingClient, skuType);
+                    }
+                });
     }
 
     /**
      * Returns the most recent purchase made by the user for each SKU, even if that purchase is
      * expired, canceled, or consumed.
      */
-    @NonNull
+    @CheckResult @NonNull
     public Single<Purchase.PurchasesResult> queryPurchasesNetwork(@NonNull @BillingClient.SkuType final String skuType) {
-        throwIfNotReady();
-        return Single.create(new SingleOnSubscribe<Purchase.PurchasesResult>() {
-            @Override
-            public void subscribe(@io.reactivex.annotations.NonNull final SingleEmitter<Purchase.PurchasesResult> e) throws Exception {
-                billingClient.queryPurchaseHistoryAsync(skuType, new PurchaseHistoryResponseListener() {
+        return connect()
+                .doOnSuccess(new Consumer<Integer>() {
                     @Override
-                    public void onPurchaseHistoryResponse(Purchase.PurchasesResult result) {
-                        if (!e.isDisposed()) {
-                            e.onSuccess(result);
+                    public void accept(Integer resultCode) throws Exception {
+                        if (resultCode != BillingClient.BillingResponse.OK) {
+                            throw new BillingException(resultCode);
                         }
                     }
+                })
+                .flatMap(new Function<Integer, SingleSource<Purchase.PurchasesResult>>() {
+                    @Override
+                    public SingleSource<Purchase.PurchasesResult> apply(Integer __) throws Exception {
+                        return QueryPurchasesNetworkSingle.create(billingClient, skuType);
+                    }
                 });
-            }
-        });
     }
 
     /**
-     * Consumes a given in-app product. Consuming can only be done on an item that's owned, and as a
      * result of consumption, the user will no longer own it.
+     * Consumes a given in-app product. Consuming can only be done on an item that's owned, and as a
      */
-    @NonNull
+    @CheckResult @NonNull
     public Single<ConsumeResponse> consume(@NonNull final String purchaseToken) {
-        throwIfNotReady();
-        return Single.create(new SingleOnSubscribe<ConsumeResponse>() {
-            @Override
-            public void subscribe(@io.reactivex.annotations.NonNull final SingleEmitter<ConsumeResponse> e) throws Exception {
-                billingClient.consumeAsync(purchaseToken, new ConsumeResponseListener() {
+        return connect()
+                .doOnSuccess(new Consumer<Integer>() {
                     @Override
-                    public void onConsumeResponse(String purchaseToken, int resultCode) {
-                        if (!e.isDisposed()) {
-                            e.onSuccess(new ConsumeResponse(purchaseToken, resultCode));
+                    public void accept(Integer resultCode) throws Exception {
+                        if (resultCode != BillingClient.BillingResponse.OK) {
+                            throw new BillingException(resultCode);
                         }
                     }
+                })
+                .flatMap(new Function<Integer, SingleSource<ConsumeResponse>>() {
+                    @Override
+                    public SingleSource<ConsumeResponse> apply(Integer __) throws Exception {
+                        return ConsumeSingle.create(billingClient, purchaseToken);
+                    }
                 });
-            }
-        });
     }
 
     /**
      * Returns the most recent purchase made by the user for each SKU, even if that purchase is
      * expired, canceled, or consumed.
      */
-    @NonNull
+    @CheckResult @NonNull
     public Single<Purchase.PurchasesResult> queryPurchaseHistory(@NonNull @BillingClient.SkuType final String skuType) {
-        throwIfNotReady();
-        return Single.create(new SingleOnSubscribe<Purchase.PurchasesResult>() {
-            @Override
-            public void subscribe(@io.reactivex.annotations.NonNull final SingleEmitter<Purchase.PurchasesResult> e) throws Exception {
-                billingClient.queryPurchaseHistoryAsync(skuType, new PurchaseHistoryResponseListener() {
+        return connect()
+                .doOnSuccess(new Consumer<Integer>() {
                     @Override
-                    public void onPurchaseHistoryResponse(Purchase.PurchasesResult result) {
-                        if (!e.isDisposed()) {
-                            e.onSuccess(result);
+                    public void accept(Integer resultCode) throws Exception {
+                        if (resultCode != BillingClient.BillingResponse.OK) {
+                            throw new BillingException(resultCode);
                         }
                     }
+                })
+                .flatMap(new Function<Integer, SingleSource<Purchase.PurchasesResult>>() {
+                    @Override
+                    public SingleSource<Purchase.PurchasesResult> apply(Integer __) throws Exception {
+                        return QueryPurchaseHistorySingle.create(billingClient, skuType);
+                    }
                 });
-            }
-        });
     }
 
     /**
      * Emit's on every purchase update
      */
-    @NonNull
+    @CheckResult @NonNull
     public Observable<PurchaseUpdate> purchaseUpdates() {
         return purchaseUpdatesSubject;
     }
 
-    private PurchasesUpdatedListener purchasesUpdatedListener = new PurchasesUpdatedListener() {
-        @Override
-        public void onPurchasesUpdated(int responseCode, List<Purchase> purchases) {
-            purchaseUpdatesSubject.onNext(new PurchaseUpdate(purchases, responseCode));
+    private Single<Integer> connect() {
+        if (billingClient.isReady()) {
+            // were already connected
+            return Single.just(BillingClient.BillingResponse.OK);
         }
-    };
 
-    private void throwIfNotReady() {
-        if (!isReady()) {
-            throw new IllegalStateException("you need to wait for state connected first");
-        }
+        return StartConnectionSingle.create(billingClient)
+                .doOnSuccess(new Consumer<Integer>() {
+                    @Override
+                    public void accept(Integer resultCode) throws Exception {
+                        if (resultCode != BillingClient.BillingResponse.OK) {
+                            throw new IllegalStateException(String.valueOf(resultCode));
+                        }
+                    }
+                });
     }
+
 }

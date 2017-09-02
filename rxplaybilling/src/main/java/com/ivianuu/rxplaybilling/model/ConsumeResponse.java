@@ -1,4 +1,4 @@
-package com.ivianuu.rxplaybilling;
+package com.ivianuu.rxplaybilling.model;
 
 import android.support.annotation.NonNull;
 
