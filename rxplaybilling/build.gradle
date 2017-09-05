@@ -13,6 +13,9 @@ android {
 }
 
 dependencies {
+    // Android Support
+    api 'com.android.support:support-annotations:26.0.2'
+
     // PlayBilling
     api 'com.android.billingclient:billing:dp-1'
 

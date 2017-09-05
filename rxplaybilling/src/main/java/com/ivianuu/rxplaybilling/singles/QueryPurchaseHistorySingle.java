@@ -7,37 +7,36 @@ import android.support.annotation.RestrictTo;
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.PurchaseHistoryResponseListener;
+import com.ivianuu.rxplaybilling.model.PurchasesResponse;
 
 import io.reactivex.Single;
 import io.reactivex.SingleEmitter;
-import io.reactivex.SingleOnSubscribe;
 
 /**
  * Query purchase history single
  */
-@RestrictTo(RestrictTo.Scope.GROUP_ID)
-public final class QueryPurchaseHistorySingle implements SingleOnSubscribe<Purchase.PurchasesResult> {
+@RestrictTo(RestrictTo.Scope.LIBRARY)
+public final class QueryPurchaseHistorySingle extends BaseSingle<PurchasesResponse> {
 
-    private BillingClient billingClient;
-    private String skuType;
+    private final String skuType;
 
     private QueryPurchaseHistorySingle(BillingClient billingClient, String skuType) {
-        this.billingClient = billingClient;
+        super(billingClient);
         this.skuType = skuType;
     }
 
     @CheckResult @NonNull
-    public static Single<Purchase.PurchasesResult> create(@NonNull BillingClient billingClient, @NonNull String skuType) {
+    public static Single<PurchasesResponse> create(@NonNull BillingClient billingClient, @NonNull String skuType) {
         return Single.create(new QueryPurchaseHistorySingle(billingClient, skuType));
     }
 
     @Override
-    public void subscribe(final SingleEmitter<Purchase.PurchasesResult> e) throws Exception {
+    public void subscribe(final SingleEmitter<PurchasesResponse> e) throws Exception {
         billingClient.queryPurchaseHistoryAsync(skuType, new PurchaseHistoryResponseListener() {
             @Override
             public void onPurchaseHistoryResponse(Purchase.PurchasesResult result) {
                 if (!e.isDisposed()) {
-                    e.onSuccess(result);
+                    e.onSuccess(new PurchasesResponse(result.getPurchasesList(), result.getResponseCode()));
                 }
             }
         });

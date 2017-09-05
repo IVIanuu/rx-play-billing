@@ -10,7 +10,8 @@ import com.android.billingclient.api.BillingFlowParams;
 import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.PurchasesUpdatedListener;
 import com.ivianuu.rxplaybilling.model.ConsumeResponse;
-import com.ivianuu.rxplaybilling.model.PurchaseUpdate;
+import com.ivianuu.rxplaybilling.model.PurchasesResponse;
+import com.ivianuu.rxplaybilling.model.Response;
 import com.ivianuu.rxplaybilling.singles.ConsumeSingle;
 import com.ivianuu.rxplaybilling.singles.QueryPurchaseHistorySingle;
 import com.ivianuu.rxplaybilling.singles.QueryPurchasesNetworkSingle;
@@ -22,7 +23,6 @@ import java.util.List;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.SingleSource;
-import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.subjects.PublishSubject;
 
@@ -33,15 +33,15 @@ public final class RxPlayBilling {
 
     private static RxPlayBilling instance;
 
-    private BillingClient billingClient;
-    private PublishSubject<PurchaseUpdate> purchaseUpdatesSubject = PublishSubject.create();
+    private final BillingClient billingClient;
+    private final PublishSubject<PurchasesResponse> purchasesSubject = PublishSubject.create();
 
     private RxPlayBilling(@NonNull Context context) {
         billingClient = new BillingClient.Builder(context)
                 .setListener(new PurchasesUpdatedListener() {
                     @Override
                     public void onPurchasesUpdated(int responseCode, List<Purchase> purchases) {
-                        purchaseUpdatesSubject.onNext(new PurchaseUpdate(purchases, responseCode));
+                        purchasesSubject.onNext(new PurchasesResponse(purchases, responseCode));
                     }
                 })
                 .build();
@@ -51,7 +51,7 @@ public final class RxPlayBilling {
      * Returns the RxPlayBilling instance
      */
     @NonNull
-    public static RxPlayBilling getInstance(@NonNull Context context) {
+    public static RxPlayBilling get(@NonNull Context context) {
         if (instance == null) {
             instance = new RxPlayBilling(context.getApplicationContext());
         }
@@ -62,82 +62,35 @@ public final class RxPlayBilling {
     /**
      * Check if specified feature or capability is supported by the Play Store.
      */
-    @BillingClient.BillingResponse
     @CheckResult @NonNull
-    public Single<Integer> isFeatureSupported(@NonNull @BillingClient.FeatureType final String feature) {
+    public Single<Response> isFeatureSupported(@NonNull @BillingClient.FeatureType final String feature) {
         return connect()
-                .map(new Function<Integer, Integer>() {
+                .map(new Function<Response, Response>() {
                     @Override
-                    public Integer apply(Integer resultCode) throws Exception {
-                        if (resultCode == BillingClient.BillingResponse.OK) {
-                            return billingClient.isFeatureSupported(feature);
+                    public Response apply(Response response) throws Exception {
+                        if (response.success()) {
+                            return new Response(billingClient.isFeatureSupported(feature));
+                        } else {
+                            return response;
                         }
-
-                        throw new BillingException(resultCode);
-                    };
+                    }
                 });
     }
 
     /**
      * Initiate the UI flow for an in-app purchase or subscription.
      */
-    @BillingClient.BillingResponse
     @CheckResult @NonNull
-    public Single<Integer> launchBillingFlow(@NonNull final Activity activity, @NonNull final BillingFlowParams billingFlowParams) {
+    public Single<Response> launchBillingFlow(@NonNull final Activity activity, @NonNull final BillingFlowParams billingFlowParams) {
         return connect()
-                .doOnSuccess(new Consumer<Integer>() {
+                .map(new Function<Response, Response>() {
                     @Override
-                    public void accept(Integer resultCode) throws Exception {
-                        if (resultCode == BillingClient.BillingResponse.OK) {
-                            billingClient.launchBillingFlow(activity, billingFlowParams);
+                    public Response apply(Response response) throws Exception {
+                        if (response.success()) {
+                            return new Response(billingClient.launchBillingFlow(activity, billingFlowParams));
+                        } else {
+                            return response;
                         }
-
-                        throw new BillingException(resultCode);
-                    }
-                });
-    }
-
-    /**
-     * Perform a network query to get SKU details and return the result asynchronously.
-     */
-    @CheckResult @NonNull
-    public Single<Purchase.PurchasesResult> queryPurchases(@NonNull @BillingClient.SkuType final String skuType) {
-        return connect()
-                .doOnSuccess(new Consumer<Integer>() {
-                    @Override
-                    public void accept(Integer resultCode) throws Exception {
-                        if (resultCode != BillingClient.BillingResponse.OK) {
-                            throw new BillingException(resultCode);
-                        }
-                    }
-                })
-                .flatMap(new Function<Integer, SingleSource<Purchase.PurchasesResult>>() {
-                    @Override
-                    public SingleSource<Purchase.PurchasesResult> apply(Integer __) throws Exception {
-                        return QueryPurchasesSingle.create(billingClient, skuType);
-                    }
-                });
-    }
-
-    /**
-     * Returns the most recent purchase made by the user for each SKU, even if that purchase is
-     * expired, canceled, or consumed.
-     */
-    @CheckResult @NonNull
-    public Single<Purchase.PurchasesResult> queryPurchasesNetwork(@NonNull @BillingClient.SkuType final String skuType) {
-        return connect()
-                .doOnSuccess(new Consumer<Integer>() {
-                    @Override
-                    public void accept(Integer resultCode) throws Exception {
-                        if (resultCode != BillingClient.BillingResponse.OK) {
-                            throw new BillingException(resultCode);
-                        }
-                    }
-                })
-                .flatMap(new Function<Integer, SingleSource<Purchase.PurchasesResult>>() {
-                    @Override
-                    public SingleSource<Purchase.PurchasesResult> apply(Integer __) throws Exception {
-                        return QueryPurchasesNetworkSingle.create(billingClient, skuType);
                     }
                 });
     }
@@ -149,18 +102,32 @@ public final class RxPlayBilling {
     @CheckResult @NonNull
     public Single<ConsumeResponse> consume(@NonNull final String purchaseToken) {
         return connect()
-                .doOnSuccess(new Consumer<Integer>() {
+                .flatMap(new Function<Response, SingleSource<? extends ConsumeResponse>>() {
                     @Override
-                    public void accept(Integer resultCode) throws Exception {
-                        if (resultCode != BillingClient.BillingResponse.OK) {
-                            throw new BillingException(resultCode);
+                    public SingleSource<? extends ConsumeResponse> apply(Response response) throws Exception {
+                        if (response.success()) {
+                            return ConsumeSingle.create(billingClient, purchaseToken);
+                        } else {
+                            return Single.just(new ConsumeResponse(null, response.responseCode()));
                         }
                     }
-                })
-                .flatMap(new Function<Integer, SingleSource<ConsumeResponse>>() {
+                });
+    }
+
+    /**
+     * Perform a network query to get SKU details and return the result asynchronously.
+     */
+    @CheckResult @NonNull
+    public Single<PurchasesResponse> queryPurchases(@NonNull @BillingClient.SkuType final String skuType) {
+        return connect()
+                .flatMap(new Function<Response, SingleSource<? extends PurchasesResponse>>() {
                     @Override
-                    public SingleSource<ConsumeResponse> apply(Integer __) throws Exception {
-                        return ConsumeSingle.create(billingClient, purchaseToken);
+                    public SingleSource<? extends PurchasesResponse> apply(Response response) throws Exception {
+                        if (response.success()) {
+                            return QueryPurchasesSingle.create(billingClient, skuType);
+                        } else {
+                            return Single.just(new PurchasesResponse(null, response.responseCode()));
+                        }
                     }
                 });
     }
@@ -170,19 +137,26 @@ public final class RxPlayBilling {
      * expired, canceled, or consumed.
      */
     @CheckResult @NonNull
-    public Single<Purchase.PurchasesResult> queryPurchaseHistory(@NonNull @BillingClient.SkuType final String skuType) {
+    public Single<PurchasesResponse> queryPurchasesNetwork(@NonNull @BillingClient.SkuType final String skuType) {
         return connect()
-                .doOnSuccess(new Consumer<Integer>() {
+                .flatMap(new Function<Response, SingleSource<PurchasesResponse>>() {
                     @Override
-                    public void accept(Integer resultCode) throws Exception {
-                        if (resultCode != BillingClient.BillingResponse.OK) {
-                            throw new BillingException(resultCode);
-                        }
+                    public SingleSource<PurchasesResponse> apply(Response __) throws Exception {
+                        return QueryPurchasesNetworkSingle.create(billingClient, skuType);
                     }
-                })
-                .flatMap(new Function<Integer, SingleSource<Purchase.PurchasesResult>>() {
+                });
+    }
+
+    /**
+     * Returns the most recent purchase made by the user for each SKU, even if that purchase is
+     * expired, canceled, or consumed.
+     */
+    @CheckResult @NonNull
+    public Single<PurchasesResponse> queryPurchaseHistory(@NonNull @BillingClient.SkuType final String skuType) {
+        return connect()
+                .flatMap(new Function<Response, SingleSource<PurchasesResponse>>() {
                     @Override
-                    public SingleSource<Purchase.PurchasesResult> apply(Integer __) throws Exception {
+                    public SingleSource<PurchasesResponse> apply(Response response) throws Exception {
                         return QueryPurchaseHistorySingle.create(billingClient, skuType);
                     }
                 });
@@ -192,25 +166,17 @@ public final class RxPlayBilling {
      * Emit's on every purchase update
      */
     @CheckResult @NonNull
-    public Observable<PurchaseUpdate> purchaseUpdates() {
-        return purchaseUpdatesSubject;
+    public Observable<PurchasesResponse> purchaseUpdates() {
+        return purchasesSubject;
     }
 
-    private Single<Integer> connect() {
+    private Single<Response> connect() {
         if (billingClient.isReady()) {
             // were already connected
-            return Single.just(BillingClient.BillingResponse.OK);
+            return Single.just(new Response(BillingClient.BillingResponse.OK));
         }
 
-        return StartConnectionSingle.create(billingClient)
-                .doOnSuccess(new Consumer<Integer>() {
-                    @Override
-                    public void accept(Integer resultCode) throws Exception {
-                        if (resultCode != BillingClient.BillingResponse.OK) {
-                            throw new IllegalStateException(String.valueOf(resultCode));
-                        }
-                    }
-                });
+        return StartConnectionSingle.create(billingClient);
     }
 
 }

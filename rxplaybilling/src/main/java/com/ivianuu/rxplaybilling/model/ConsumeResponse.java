@@ -1,39 +1,28 @@
 package com.ivianuu.rxplaybilling.model;
 
-import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.annotation.RestrictTo;
 
 import com.android.billingclient.api.BillingClient;
 
 /**
  * Represents a consume response
  */
-public class ConsumeResponse {
+public final class ConsumeResponse extends Response {
 
-    private String purchaseToken;
-    @BillingClient.BillingResponse private int responseCode;
+    private final String purchaseToken;
 
-    /**
-     * Instantiates a consume response
-     */
-    public ConsumeResponse(@NonNull String purchaseToken, @BillingClient.BillingResponse int responseCode) {
+    @RestrictTo(RestrictTo.Scope.LIBRARY)
+    public ConsumeResponse(@Nullable String purchaseToken, @BillingClient.BillingResponse int responseCode) {
+        super(responseCode);
         this.purchaseToken = purchaseToken;
-        this.responseCode = responseCode;
     }
 
     /**
-     * The purchase token from this response
+     * The purchase token of this response
      */
-    @NonNull
-    public String getPurchaseToken() {
+    @Nullable
+    public String purchaseToken() {
         return purchaseToken;
     }
-
-    /**
-     * The response code
-     */
-    @BillingClient.BillingResponse
-    public int getResponseCode() {
-        return responseCode;
-    }
-
 }

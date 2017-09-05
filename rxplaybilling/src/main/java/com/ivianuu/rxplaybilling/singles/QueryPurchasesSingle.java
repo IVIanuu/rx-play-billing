@@ -6,34 +6,34 @@ import android.support.annotation.RestrictTo;
 
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.Purchase;
+import com.ivianuu.rxplaybilling.model.PurchasesResponse;
 
 import io.reactivex.Single;
 import io.reactivex.SingleEmitter;
-import io.reactivex.SingleOnSubscribe;
 
 /**
  * Query purchases single
  */
-@RestrictTo(RestrictTo.Scope.GROUP_ID)
-public final class QueryPurchasesSingle implements SingleOnSubscribe<Purchase.PurchasesResult> {
+@RestrictTo(RestrictTo.Scope.LIBRARY)
+public final class QueryPurchasesSingle extends BaseSingle<PurchasesResponse> {
 
-    private BillingClient billingClient;
-    private String skuType;
+    private final String skuType;
 
     private QueryPurchasesSingle(BillingClient billingClient, String skuType) {
-        this.billingClient = billingClient;
+        super(billingClient);
         this.skuType = skuType;
     }
 
     @CheckResult @NonNull
-    public static Single<Purchase.PurchasesResult> create(@NonNull BillingClient billingClient, @NonNull String skuType) {
+    public static Single<PurchasesResponse> create(@NonNull BillingClient billingClient, @NonNull String skuType) {
         return Single.create(new QueryPurchasesSingle(billingClient, skuType));
     }
 
     @Override
-    public void subscribe(final SingleEmitter<Purchase.PurchasesResult> e) throws Exception {
+    public void subscribe(final SingleEmitter<PurchasesResponse> e) throws Exception {
         if (!e.isDisposed()) {
-            e.onSuccess(billingClient.queryPurchases(skuType));
+            Purchase.PurchasesResult result = billingClient.queryPurchases(skuType);
+            e.onSuccess(new PurchasesResponse(result.getPurchasesList(), result.getResponseCode()));
         }
     }
 }

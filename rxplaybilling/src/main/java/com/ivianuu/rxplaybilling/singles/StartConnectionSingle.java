@@ -6,44 +6,40 @@ import android.support.annotation.RestrictTo;
 
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingClientStateListener;
+import com.ivianuu.rxplaybilling.model.Response;
 
 import io.reactivex.Single;
 import io.reactivex.SingleEmitter;
-import io.reactivex.SingleOnSubscribe;
 
 /**
  * Start connection single
  */
-@RestrictTo(RestrictTo.Scope.GROUP_ID)
-public final class StartConnectionSingle implements SingleOnSubscribe<Integer> {
-
-    private BillingClient billingClient;
+@RestrictTo(RestrictTo.Scope.LIBRARY)
+public final class StartConnectionSingle extends BaseSingle<Response> {
 
     private StartConnectionSingle(BillingClient billingClient) {
-        this.billingClient = billingClient;
+        super(billingClient);
     }
 
     @CheckResult @NonNull
-    public static Single<Integer> create(@NonNull BillingClient billingClient) {
+    public static Single<Response> create(@NonNull BillingClient billingClient) {
         return Single.create(new StartConnectionSingle(billingClient));
     }
 
     @Override
-    public void subscribe(final SingleEmitter<Integer> e) throws Exception {
+    public void subscribe(final SingleEmitter<Response> e) throws Exception {
         // connect
         billingClient.startConnection(new BillingClientStateListener() {
             @Override
-            public void onBillingSetupFinished(int resultCode) {
+            public void onBillingSetupFinished(int responseCode) {
                 if (!e.isDisposed()) {
-                    e.onSuccess(resultCode);
+                    e.onSuccess(new Response(responseCode));
                 }
             }
 
             @Override
             public void onBillingServiceDisconnected() {
-                if (!e.isDisposed()) {
-                    e.onError(new IllegalStateException(String.valueOf(BillingClient.BillingResponse.SERVICE_DISCONNECTED)));
-                }
+                // ignore
             }
         });
     }

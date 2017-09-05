@@ -10,24 +10,23 @@ import com.ivianuu.rxplaybilling.model.ConsumeResponse;
 
 import io.reactivex.Single;
 import io.reactivex.SingleEmitter;
-import io.reactivex.SingleOnSubscribe;
 
 /**
  * Consume single
  */
-@RestrictTo(RestrictTo.Scope.GROUP_ID)
-public final class ConsumeSingle implements SingleOnSubscribe<ConsumeResponse> {
+@RestrictTo(RestrictTo.Scope.LIBRARY)
+public final class ConsumeSingle extends BaseSingle<ConsumeResponse> {
 
-    private BillingClient billingClient;
-    private String purchaseToken;
+    private final String purchaseToken;
 
     private ConsumeSingle(BillingClient billingClient, String purchaseToken) {
-        this.billingClient = billingClient;
+        super(billingClient);
         this.purchaseToken = purchaseToken;
     }
 
     @CheckResult @NonNull
-    public static Single<ConsumeResponse> create(@NonNull BillingClient billingClient, @NonNull String purchaseToken) {
+    public static Single<ConsumeResponse> create(@NonNull BillingClient billingClient,
+                                                 @NonNull String purchaseToken) {
         return Single.create(new ConsumeSingle(billingClient, purchaseToken));
     }
 
