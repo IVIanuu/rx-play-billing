@@ -14,13 +14,13 @@ android {
 
 dependencies {
     // Android Support
-    api 'com.android.support:support-annotations:26.0.2'
+    compile 'com.android.support:support-annotations:26.0.2'
 
     // PlayBilling
-    api 'com.android.billingclient:billing:dp-1'
+    compile 'com.android.billingclient:billing:dp-1'
 
     // RxJava
-    api "io.reactivex.rxjava2:rxjava:2.1.2"
+    compile "io.reactivex.rxjava2:rxjava:2.1.2"
 }
 
 // build a jar with source files
