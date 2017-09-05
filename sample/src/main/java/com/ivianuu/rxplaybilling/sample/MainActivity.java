@@ -1,19 +1,15 @@
 package com.ivianuu.rxplaybilling.sample;
 
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingFlowParams;
-import com.android.billingclient.api.Purchase;
 import com.ivianuu.rxplaybilling.RxPlayBilling;
-import com.ivianuu.rxplaybilling.model.ConsumeResponse;
 import com.ivianuu.rxplaybilling.model.Response;
 
-import io.reactivex.ObservableSource;
 import io.reactivex.SingleSource;
-import io.reactivex.annotations.NonNull;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.functions.Predicate;
