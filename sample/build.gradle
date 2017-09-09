@@ -3,12 +3,18 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion 26
     buildToolsVersion "26.0.1"
+
     defaultConfig {
         applicationId "com.ivianuu.rxplaybilling.sample"
         minSdkVersion 15
         targetSdkVersion 26
         versionCode 1
         versionName "1.0"
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 }
 

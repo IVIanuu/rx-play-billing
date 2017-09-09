@@ -7,8 +7,6 @@ import android.support.annotation.NonNull;
 
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingFlowParams;
-import com.android.billingclient.api.Purchase;
-import com.android.billingclient.api.PurchasesUpdatedListener;
 import com.ivianuu.rxplaybilling.model.ConsumeResponse;
 import com.ivianuu.rxplaybilling.model.PurchasesResponse;
 import com.ivianuu.rxplaybilling.model.Response;
@@ -18,12 +16,8 @@ import com.ivianuu.rxplaybilling.singles.QueryPurchasesNetworkSingle;
 import com.ivianuu.rxplaybilling.singles.QueryPurchasesSingle;
 import com.ivianuu.rxplaybilling.singles.StartConnectionSingle;
 
-import java.util.List;
-
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import io.reactivex.SingleSource;
-import io.reactivex.functions.Function;
 import io.reactivex.subjects.PublishSubject;
 
 /**
@@ -38,12 +32,8 @@ public final class RxPlayBilling {
 
     private RxPlayBilling(@NonNull Context context) {
         billingClient = new BillingClient.Builder(context)
-                .setListener(new PurchasesUpdatedListener() {
-                    @Override
-                    public void onPurchasesUpdated(int responseCode, List<Purchase> purchases) {
-                        purchasesSubject.onNext(new PurchasesResponse(purchases, responseCode));
-                    }
-                })
+                .setListener((responseCode, purchases)
+                        -> purchasesSubject.onNext(new PurchasesResponse(purchases, responseCode)))
                 .build();
     }
 
@@ -65,14 +55,11 @@ public final class RxPlayBilling {
     @CheckResult @NonNull
     public Single<Response> isFeatureSupported(@NonNull @BillingClient.FeatureType final String feature) {
         return connect()
-                .map(new Function<Response, Response>() {
-                    @Override
-                    public Response apply(Response response) throws Exception {
-                        if (response.success()) {
-                            return new Response(billingClient.isFeatureSupported(feature));
-                        } else {
-                            return response;
-                        }
+                .map(response -> {
+                    if (response.success()) {
+                        return new Response(billingClient.isFeatureSupported(feature));
+                    } else {
+                        return response;
                     }
                 });
     }
@@ -83,14 +70,11 @@ public final class RxPlayBilling {
     @CheckResult @NonNull
     public Single<Response> launchBillingFlow(@NonNull final Activity activity, @NonNull final BillingFlowParams billingFlowParams) {
         return connect()
-                .map(new Function<Response, Response>() {
-                    @Override
-                    public Response apply(Response response) throws Exception {
-                        if (response.success()) {
-                            return new Response(billingClient.launchBillingFlow(activity, billingFlowParams));
-                        } else {
-                            return response;
-                        }
+                .map(response -> {
+                    if (response.success()) {
+                        return new Response(billingClient.launchBillingFlow(activity, billingFlowParams));
+                    } else {
+                        return response;
                     }
                 });
     }
@@ -102,14 +86,11 @@ public final class RxPlayBilling {
     @CheckResult @NonNull
     public Single<ConsumeResponse> consume(@NonNull final String purchaseToken) {
         return connect()
-                .flatMap(new Function<Response, SingleSource<? extends ConsumeResponse>>() {
-                    @Override
-                    public SingleSource<? extends ConsumeResponse> apply(Response response) throws Exception {
-                        if (response.success()) {
-                            return ConsumeSingle.create(billingClient, purchaseToken);
-                        } else {
-                            return Single.just(new ConsumeResponse(null, response.responseCode()));
-                        }
+                .flatMap(response -> {
+                    if (response.success()) {
+                        return ConsumeSingle.create(billingClient, purchaseToken);
+                    } else {
+                        return Single.just(new ConsumeResponse(null, response.responseCode()));
                     }
                 });
     }
@@ -120,14 +101,11 @@ public final class RxPlayBilling {
     @CheckResult @NonNull
     public Single<PurchasesResponse> queryPurchases(@NonNull @BillingClient.SkuType final String skuType) {
         return connect()
-                .flatMap(new Function<Response, SingleSource<? extends PurchasesResponse>>() {
-                    @Override
-                    public SingleSource<? extends PurchasesResponse> apply(Response response) throws Exception {
-                        if (response.success()) {
-                            return QueryPurchasesSingle.create(billingClient, skuType);
-                        } else {
-                            return Single.just(new PurchasesResponse(null, response.responseCode()));
-                        }
+                .flatMap(response -> {
+                    if (response.success()) {
+                        return QueryPurchasesSingle.create(billingClient, skuType);
+                    } else {
+                        return Single.just(new PurchasesResponse(null, response.responseCode()));
                     }
                 });
     }
@@ -139,12 +117,7 @@ public final class RxPlayBilling {
     @CheckResult @NonNull
     public Single<PurchasesResponse> queryPurchasesNetwork(@NonNull @BillingClient.SkuType final String skuType) {
         return connect()
-                .flatMap(new Function<Response, SingleSource<PurchasesResponse>>() {
-                    @Override
-                    public SingleSource<PurchasesResponse> apply(Response __) throws Exception {
-                        return QueryPurchasesNetworkSingle.create(billingClient, skuType);
-                    }
-                });
+                .flatMap(__ -> QueryPurchasesNetworkSingle.create(billingClient, skuType));
     }
 
     /**
@@ -154,12 +127,7 @@ public final class RxPlayBilling {
     @CheckResult @NonNull
     public Single<PurchasesResponse> queryPurchaseHistory(@NonNull @BillingClient.SkuType final String skuType) {
         return connect()
-                .flatMap(new Function<Response, SingleSource<PurchasesResponse>>() {
-                    @Override
-                    public SingleSource<PurchasesResponse> apply(Response response) throws Exception {
-                        return QueryPurchaseHistorySingle.create(billingClient, skuType);
-                    }
-                });
+                .flatMap(response -> QueryPurchaseHistorySingle.create(billingClient, skuType));
     }
 
     /**

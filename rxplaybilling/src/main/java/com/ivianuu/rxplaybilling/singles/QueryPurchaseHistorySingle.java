@@ -5,8 +5,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.RestrictTo;
 
 import com.android.billingclient.api.BillingClient;
-import com.android.billingclient.api.Purchase;
-import com.android.billingclient.api.PurchaseHistoryResponseListener;
 import com.ivianuu.rxplaybilling.model.PurchasesResponse;
 
 import io.reactivex.Single;
@@ -32,12 +30,9 @@ public final class QueryPurchaseHistorySingle extends BaseSingle<PurchasesRespon
 
     @Override
     public void subscribe(final SingleEmitter<PurchasesResponse> e) throws Exception {
-        billingClient.queryPurchaseHistoryAsync(skuType, new PurchaseHistoryResponseListener() {
-            @Override
-            public void onPurchaseHistoryResponse(Purchase.PurchasesResult result) {
-                if (!e.isDisposed()) {
-                    e.onSuccess(new PurchasesResponse(result.getPurchasesList(), result.getResponseCode()));
-                }
+        billingClient.queryPurchaseHistoryAsync(skuType, result -> {
+            if (!e.isDisposed()) {
+                e.onSuccess(new PurchasesResponse(result.getPurchasesList(), result.getResponseCode()));
             }
         });
     }

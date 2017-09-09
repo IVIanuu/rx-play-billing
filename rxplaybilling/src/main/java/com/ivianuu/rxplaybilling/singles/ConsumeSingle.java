@@ -5,7 +5,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.RestrictTo;
 
 import com.android.billingclient.api.BillingClient;
-import com.android.billingclient.api.ConsumeResponseListener;
 import com.ivianuu.rxplaybilling.model.ConsumeResponse;
 
 import io.reactivex.Single;
@@ -32,12 +31,9 @@ public final class ConsumeSingle extends BaseSingle<ConsumeResponse> {
 
     @Override
     public void subscribe(final SingleEmitter<ConsumeResponse> e) throws Exception {
-        billingClient.consumeAsync(purchaseToken, new ConsumeResponseListener() {
-            @Override
-            public void onConsumeResponse(String purchaseToken, int resultCode) {
-                if (!e.isDisposed()) {
-                    e.onSuccess(new ConsumeResponse(purchaseToken, resultCode));
-                }
+        billingClient.consumeAsync(purchaseToken, (purchaseToken, resultCode) -> {
+            if (!e.isDisposed()) {
+                e.onSuccess(new ConsumeResponse(purchaseToken, resultCode));
             }
         });
     }
