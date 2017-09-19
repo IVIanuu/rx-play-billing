@@ -13,7 +13,7 @@ buildscript {
         supportAnnotations = "com.android.support:support-annotations:$supportVersion"
         supportAppCompat = "com.android.support:appcompat-v7:$supportVersion"
 
-        playBilling = 'com.android.billingclient:billing:dp-1'
+        playBilling = 'com.android.billingclient:billing:1.0'
 
         rxJava = 'io.reactivex.rxjava2:rxjava:2.1.3'
     }

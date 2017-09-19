@@ -31,7 +31,7 @@ public final class RxPlayBilling {
     private final PublishSubject<PurchasesResponse> purchasesSubject = PublishSubject.create();
 
     private RxPlayBilling(@NonNull Context context) {
-        billingClient = new BillingClient.Builder(context)
+        billingClient = BillingClient.newBuilder(context)
                 .setListener((responseCode, purchases)
                         -> purchasesSubject.onNext(new PurchasesResponse(purchases, responseCode)))
                 .build();
