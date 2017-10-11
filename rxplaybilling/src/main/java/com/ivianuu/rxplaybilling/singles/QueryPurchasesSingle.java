@@ -23,9 +23,12 @@ public final class QueryPurchasesSingle extends BaseSingle<PurchasesResponse> {
         super(billingClient);
         this.skuType = skuType;
     }
-
+    /**
+     * Queries the purchases and emits the response
+     */
     @CheckResult @NonNull
-    public static Single<PurchasesResponse> create(@NonNull BillingClient billingClient, @NonNull String skuType) {
+    public static Single<PurchasesResponse> create(@NonNull BillingClient billingClient,
+                                                   @BillingClient.SkuType @NonNull String skuType) {
         return Single.create(new QueryPurchasesSingle(billingClient, skuType));
     }
 

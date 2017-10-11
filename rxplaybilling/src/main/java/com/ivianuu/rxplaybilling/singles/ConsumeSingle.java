@@ -23,6 +23,9 @@ public final class ConsumeSingle extends BaseSingle<ConsumeResponse> {
         this.purchaseToken = purchaseToken;
     }
 
+    /**
+     * Consumes the purchase and emits the response
+     */
     @CheckResult @NonNull
     public static Single<ConsumeResponse> create(@NonNull BillingClient billingClient,
                                                  @NonNull String purchaseToken) {
@@ -33,7 +36,7 @@ public final class ConsumeSingle extends BaseSingle<ConsumeResponse> {
     public void subscribe(final SingleEmitter<ConsumeResponse> e) throws Exception {
         billingClient.consumeAsync(purchaseToken, (purchaseToken, resultCode) -> {
             if (!e.isDisposed()) {
-                e.onSuccess(new ConsumeResponse(purchaseToken, resultCode));
+                e.onSuccess(new ConsumeResponse(resultCode, purchaseToken));
             }
         });
     }

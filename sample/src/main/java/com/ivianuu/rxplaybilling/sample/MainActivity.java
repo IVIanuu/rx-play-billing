@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
                 .isFeatureSupported(BillingClient.FeatureType.IN_APP_ITEMS_ON_VR)
                 .filter(Response::success)
                 .flatMapSingle(__ -> {
-                    BillingFlowParams params = new BillingFlowParams.Builder()
+                    BillingFlowParams params = BillingFlowParams.newBuilder()
                             .setType(BillingClient.FeatureType.IN_APP_ITEMS_ON_VR)
                             .setSku("")
                             .build();

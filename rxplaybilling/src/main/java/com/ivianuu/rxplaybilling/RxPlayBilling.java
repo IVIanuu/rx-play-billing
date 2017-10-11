@@ -20,6 +20,8 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.subjects.PublishSubject;
 
+import static com.ivianuu.rxplaybilling.Preconditions.checkNotNull;
+
 /**
  * Wraps a BillingClient
  */
@@ -30,7 +32,7 @@ public final class RxPlayBilling {
     private final BillingClient billingClient;
     private final PublishSubject<PurchasesResponse> purchasesSubject = PublishSubject.create();
 
-    private RxPlayBilling(@NonNull Context context) {
+    private RxPlayBilling(Context context) {
         billingClient = BillingClient.newBuilder(context)
                 .setListener((responseCode, purchases)
                         -> purchasesSubject.onNext(new PurchasesResponse(purchases, responseCode)))
@@ -42,6 +44,7 @@ public final class RxPlayBilling {
      */
     @NonNull
     public static RxPlayBilling get(@NonNull Context context) {
+        checkNotNull(context, "context == null");
         if (instance == null) {
             instance = new RxPlayBilling(context.getApplicationContext());
         }
@@ -53,7 +56,8 @@ public final class RxPlayBilling {
      * Check if specified feature or capability is supported by the Play Store.
      */
     @CheckResult @NonNull
-    public Single<Response> isFeatureSupported(@NonNull @BillingClient.FeatureType final String feature) {
+    public Single<Response> isFeatureSupported(@BillingClient.FeatureType @NonNull final String feature) {
+        checkNotNull(feature, "feature == null");
         return connect()
                 .map(response -> {
                     if (response.success()) {
@@ -68,7 +72,10 @@ public final class RxPlayBilling {
      * Initiate the UI flow for an in-app purchase or subscription.
      */
     @CheckResult @NonNull
-    public Single<Response> launchBillingFlow(@NonNull final Activity activity, @NonNull final BillingFlowParams billingFlowParams) {
+    public Single<Response> launchBillingFlow(@NonNull final Activity activity,
+                                              @NonNull final BillingFlowParams billingFlowParams) {
+        checkNotNull(activity, "activity == null");
+        checkNotNull(billingFlowParams, "billingFlowParams == null");
         return connect()
                 .map(response -> {
                     if (response.success()) {
@@ -85,6 +92,7 @@ public final class RxPlayBilling {
      */
     @CheckResult @NonNull
     public Single<ConsumeResponse> consume(@NonNull final String purchaseToken) {
+        checkNotNull(purchaseToken, "purchaseToken == null");
         return connect()
                 .flatMap(response -> {
                     if (response.success()) {
@@ -99,7 +107,8 @@ public final class RxPlayBilling {
      * Perform a network query to get SKU details and return the result asynchronously.
      */
     @CheckResult @NonNull
-    public Single<PurchasesResponse> queryPurchases(@NonNull @BillingClient.SkuType final String skuType) {
+    public Single<PurchasesResponse> queryPurchases(@BillingClient.SkuType @NonNull final String skuType) {
+        checkNotNull(skuType, "skuType == null");
         return connect()
                 .flatMap(response -> {
                     if (response.success()) {
@@ -115,7 +124,8 @@ public final class RxPlayBilling {
      * expired, canceled, or consumed.
      */
     @CheckResult @NonNull
-    public Single<PurchasesResponse> queryPurchasesNetwork(@NonNull @BillingClient.SkuType final String skuType) {
+    public Single<PurchasesResponse> queryPurchasesNetwork(@BillingClient.SkuType @NonNull final String skuType) {
+        checkNotNull(skuType, "skuType == null");
         return connect()
                 .flatMap(__ -> QueryPurchasesNetworkSingle.create(billingClient, skuType));
     }
@@ -125,13 +135,14 @@ public final class RxPlayBilling {
      * expired, canceled, or consumed.
      */
     @CheckResult @NonNull
-    public Single<PurchasesResponse> queryPurchaseHistory(@NonNull @BillingClient.SkuType final String skuType) {
+    public Single<PurchasesResponse> queryPurchaseHistory(@BillingClient.SkuType @NonNull final String skuType) {
+        checkNotNull(skuType, "skuType == null");
         return connect()
                 .flatMap(response -> QueryPurchaseHistorySingle.create(billingClient, skuType));
     }
 
     /**
-     * Emit's on every purchase update
+     * Emit's purchase updates
      */
     @CheckResult @NonNull
     public Observable<PurchasesResponse> purchaseUpdates() {

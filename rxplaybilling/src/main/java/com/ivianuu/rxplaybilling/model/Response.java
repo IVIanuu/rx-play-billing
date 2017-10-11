@@ -9,7 +9,6 @@ import com.android.billingclient.api.BillingClient;
  */
 public class Response {
 
-    @BillingClient.BillingResponse
     private final int responseCode;
 
     @RestrictTo(RestrictTo.Scope.LIBRARY)
@@ -20,8 +19,7 @@ public class Response {
     /**
      * Returns the response code
      */
-    @BillingClient.BillingResponse
-    public int responseCode() {
+    @BillingClient.BillingResponse public int responseCode() {
         return responseCode;
     }
 

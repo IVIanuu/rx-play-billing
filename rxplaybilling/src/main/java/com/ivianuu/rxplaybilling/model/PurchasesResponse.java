@@ -16,7 +16,8 @@ public final class PurchasesResponse extends Response {
     private final List<Purchase> purchases;
 
     @RestrictTo(RestrictTo.Scope.LIBRARY)
-    public PurchasesResponse(@Nullable List<Purchase> purchases, @BillingClient.BillingResponse int responseCode) {
+    public PurchasesResponse(@Nullable List<Purchase> purchases,
+                             @BillingClient.BillingResponse int responseCode) {
         super(responseCode);
         this.purchases = purchases;
     }
@@ -24,8 +25,7 @@ public final class PurchasesResponse extends Response {
     /**
      * Returns the purchases
      */
-    @Nullable
-    public List<Purchase> purchases() {
+    @Nullable public List<Purchase> purchases() {
         return purchases;
     }
 }

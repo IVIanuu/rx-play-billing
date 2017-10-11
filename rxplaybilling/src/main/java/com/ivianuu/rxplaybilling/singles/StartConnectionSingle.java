@@ -21,6 +21,9 @@ public final class StartConnectionSingle extends BaseSingle<Response> {
         super(billingClient);
     }
 
+    /**
+     * Starts the connection and emits the response
+     */
     @CheckResult @NonNull
     public static Single<Response> create(@NonNull BillingClient billingClient) {
         return Single.create(new StartConnectionSingle(billingClient));

@@ -23,16 +23,20 @@ public final class QueryPurchaseHistorySingle extends BaseSingle<PurchasesRespon
         this.skuType = skuType;
     }
 
+    /**
+     * Queries the purchase history and emits the response
+     */
     @CheckResult @NonNull
-    public static Single<PurchasesResponse> create(@NonNull BillingClient billingClient, @NonNull String skuType) {
+    public static Single<PurchasesResponse> create(@NonNull BillingClient billingClient,
+                                                   @BillingClient.SkuType @NonNull String skuType) {
         return Single.create(new QueryPurchaseHistorySingle(billingClient, skuType));
     }
 
     @Override
     public void subscribe(final SingleEmitter<PurchasesResponse> e) throws Exception {
-        billingClient.queryPurchaseHistoryAsync(skuType, result -> {
+        billingClient.queryPurchaseHistoryAsync(skuType, (responseCode, purchasesList) -> {
             if (!e.isDisposed()) {
-                e.onSuccess(new PurchasesResponse(result.getPurchasesList(), result.getResponseCode()));
+                e.onSuccess(new PurchasesResponse(purchasesList, responseCode));
             }
         });
     }

@@ -13,7 +13,8 @@ public final class ConsumeResponse extends Response {
     private final String purchaseToken;
 
     @RestrictTo(RestrictTo.Scope.LIBRARY)
-    public ConsumeResponse(@Nullable String purchaseToken, @BillingClient.BillingResponse int responseCode) {
+    public ConsumeResponse(@Nullable String purchaseToken,
+                           @BillingClient.BillingResponse int responseCode) {
         super(responseCode);
         this.purchaseToken = purchaseToken;
     }
@@ -21,8 +22,7 @@ public final class ConsumeResponse extends Response {
     /**
      * The purchase token of this response
      */
-    @Nullable
-    public String purchaseToken() {
+    @Nullable public String purchaseToken() {
         return purchaseToken;
     }
 }

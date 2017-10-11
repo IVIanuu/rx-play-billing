@@ -5,8 +5,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.RestrictTo;
 
 import com.android.billingclient.api.BillingClient;
-import com.android.billingclient.api.Purchase;
-import com.android.billingclient.api.PurchaseHistoryResponseListener;
 import com.ivianuu.rxplaybilling.model.PurchasesResponse;
 
 import io.reactivex.Single;
@@ -25,19 +23,20 @@ public final class QueryPurchasesNetworkSingle extends BaseSingle<PurchasesRespo
         this.skuType = skuType;
     }
 
+    /**
+     * Queries the purchases from network and emits the response
+     */
     @CheckResult @NonNull
-    public static Single<PurchasesResponse> create(@NonNull BillingClient billingClient, @NonNull String skuType) {
+    public static Single<PurchasesResponse> create(@NonNull BillingClient billingClient,
+                                                   @BillingClient.SkuType @NonNull String skuType) {
         return Single.create(new QueryPurchasesNetworkSingle(billingClient, skuType));
     }
 
     @Override
     public void subscribe(final SingleEmitter<PurchasesResponse> e) throws Exception {
-        billingClient.queryPurchaseHistoryAsync(skuType, new PurchaseHistoryResponseListener() {
-            @Override
-            public void onPurchaseHistoryResponse(Purchase.PurchasesResult result) {
-                if (!e.isDisposed()) {
-                    e.onSuccess(new PurchasesResponse(result.getPurchasesList(), result.getResponseCode()));
-                }
+        billingClient.queryPurchaseHistoryAsync(skuType, (responseCode, purchasesList) -> {
+            if (!e.isDisposed()) {
+                e.onSuccess(new PurchasesResponse(purchasesList, responseCode));
             }
         });
     }
