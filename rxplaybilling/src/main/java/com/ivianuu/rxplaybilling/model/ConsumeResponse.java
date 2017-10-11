@@ -12,7 +12,7 @@ public final class ConsumeResponse extends Response {
 
     private final String purchaseToken;
 
-    @RestrictTo(RestrictTo.Scope.LIBRARY)
+    @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
     public ConsumeResponse(@Nullable String purchaseToken,
                            @BillingClient.BillingResponse int responseCode) {
         super(responseCode);

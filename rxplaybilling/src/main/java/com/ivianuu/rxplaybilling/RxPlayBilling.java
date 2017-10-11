@@ -7,13 +7,15 @@ import android.support.annotation.NonNull;
 
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingFlowParams;
+import com.android.billingclient.api.SkuDetailsParams;
 import com.ivianuu.rxplaybilling.model.ConsumeResponse;
 import com.ivianuu.rxplaybilling.model.PurchasesResponse;
 import com.ivianuu.rxplaybilling.model.Response;
+import com.ivianuu.rxplaybilling.model.SkuDetailsResponse;
 import com.ivianuu.rxplaybilling.singles.ConsumeSingle;
-import com.ivianuu.rxplaybilling.singles.QueryPurchaseHistorySingle;
 import com.ivianuu.rxplaybilling.singles.QueryPurchasesNetworkSingle;
 import com.ivianuu.rxplaybilling.singles.QueryPurchasesSingle;
+import com.ivianuu.rxplaybilling.singles.QuerySkuDetailsSingle;
 import com.ivianuu.rxplaybilling.singles.StartConnectionSingle;
 
 import io.reactivex.Observable;
@@ -26,8 +28,6 @@ import static com.ivianuu.rxplaybilling.Preconditions.checkNotNull;
  * Wraps a BillingClient
  */
 public final class RxPlayBilling {
-
-    private static RxPlayBilling instance;
 
     private final BillingClient billingClient;
     private final PublishSubject<PurchasesResponse> purchasesSubject = PublishSubject.create();
@@ -43,13 +43,24 @@ public final class RxPlayBilling {
      * Returns the RxPlayBilling instance
      */
     @NonNull
-    public static RxPlayBilling get(@NonNull Context context) {
+    public static RxPlayBilling create(@NonNull Context context) {
         checkNotNull(context, "context == null");
-        if (instance == null) {
-            instance = new RxPlayBilling(context.getApplicationContext());
-        }
+        return new RxPlayBilling(context.getApplicationContext());
+    }
 
-        return instance;
+    /**
+     * Emit's purchase updates
+     */
+    @CheckResult @NonNull
+    public Observable<PurchasesResponse> purchaseUpdates() {
+        return purchasesSubject;
+    }
+
+    /**
+     * Releases all resources of this instance
+     */
+    public void release() {
+        billingClient.endConnection();
     }
 
     /**
@@ -104,7 +115,8 @@ public final class RxPlayBilling {
     }
 
     /**
-     * Perform a network query to get SKU details and return the result asynchronously.
+     * Get purchases details for all the items bought within your app. This method uses a cache of
+     * Google Play Store app without initiating a network request.
      */
     @CheckResult @NonNull
     public Single<PurchasesResponse> queryPurchases(@BillingClient.SkuType @NonNull final String skuType) {
@@ -131,22 +143,13 @@ public final class RxPlayBilling {
     }
 
     /**
-     * Returns the most recent purchase made by the user for each SKU, even if that purchase is
-     * expired, canceled, or consumed.
+     * Perform a network query to get SKU details and return the result asynchronously.
      */
     @CheckResult @NonNull
-    public Single<PurchasesResponse> queryPurchaseHistory(@BillingClient.SkuType @NonNull final String skuType) {
-        checkNotNull(skuType, "skuType == null");
+    public Single<SkuDetailsResponse> querySkuDetails(@NonNull SkuDetailsParams skuDetailsParams) {
+        checkNotNull(skuDetailsParams, "skuDetailsParams == null");
         return connect()
-                .flatMap(response -> QueryPurchaseHistorySingle.create(billingClient, skuType));
-    }
-
-    /**
-     * Emit's purchase updates
-     */
-    @CheckResult @NonNull
-    public Observable<PurchasesResponse> purchaseUpdates() {
-        return purchasesSubject;
+                .flatMap(__ -> QuerySkuDetailsSingle.create(billingClient, skuDetailsParams));
     }
 
     private Single<Response> connect() {

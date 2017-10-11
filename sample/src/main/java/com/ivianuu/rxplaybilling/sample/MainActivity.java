@@ -18,7 +18,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        rxPlayBilling = RxPlayBilling.get(this);
+        rxPlayBilling = RxPlayBilling.create(this);
 
         rxPlayBilling
                 .isFeatureSupported(BillingClient.FeatureType.IN_APP_ITEMS_ON_VR)
@@ -39,4 +39,9 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        rxPlayBilling.release();
+    }
 }

@@ -15,7 +15,7 @@ public final class PurchasesResponse extends Response {
 
     private final List<Purchase> purchases;
 
-    @RestrictTo(RestrictTo.Scope.LIBRARY)
+    @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
     public PurchasesResponse(@Nullable List<Purchase> purchases,
                              @BillingClient.BillingResponse int responseCode) {
         super(responseCode);
