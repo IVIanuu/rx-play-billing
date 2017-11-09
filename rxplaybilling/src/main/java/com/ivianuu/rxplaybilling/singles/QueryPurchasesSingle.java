@@ -34,9 +34,7 @@ public final class QueryPurchasesSingle extends BaseSingle<PurchasesResponse> {
 
     @Override
     public void subscribe(final SingleEmitter<PurchasesResponse> e) throws Exception {
-        if (!e.isDisposed()) {
-            Purchase.PurchasesResult result = billingClient.queryPurchases(skuType);
-            e.onSuccess(new PurchasesResponse(result.getPurchasesList(), result.getResponseCode()));
-        }
+        Purchase.PurchasesResult result = billingClient.queryPurchases(skuType);
+        e.onSuccess(new PurchasesResponse(result.getPurchasesList(), result.getResponseCode()));
     }
 }

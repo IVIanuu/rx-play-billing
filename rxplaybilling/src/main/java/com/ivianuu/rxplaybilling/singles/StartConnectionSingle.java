@@ -35,9 +35,7 @@ public final class StartConnectionSingle extends BaseSingle<Response> {
         billingClient.startConnection(new BillingClientStateListener() {
             @Override
             public void onBillingSetupFinished(int responseCode) {
-                if (!e.isDisposed()) {
-                    e.onSuccess(new Response(responseCode));
-                }
+                e.onSuccess(new Response(responseCode));
             }
 
             @Override

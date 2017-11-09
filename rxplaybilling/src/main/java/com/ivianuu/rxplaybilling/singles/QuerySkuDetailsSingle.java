@@ -36,9 +36,7 @@ public final class QuerySkuDetailsSingle extends BaseSingle<SkuDetailsResponse> 
     @Override
     public void subscribe(final SingleEmitter<SkuDetailsResponse> e) throws Exception {
         billingClient.querySkuDetailsAsync(skuDetailsParams, (responseCode, skuDetailsList) -> {
-            if (!e.isDisposed()) {
-                e.onSuccess(new SkuDetailsResponse(responseCode, skuDetailsList));
-            }
+            e.onSuccess(new SkuDetailsResponse(responseCode, skuDetailsList));
         });
     }
 }

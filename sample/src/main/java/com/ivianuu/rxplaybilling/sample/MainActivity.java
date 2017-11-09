@@ -6,8 +6,12 @@ import android.util.Log;
 
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingFlowParams;
+import com.android.billingclient.api.SkuDetailsParams;
 import com.ivianuu.rxplaybilling.RxPlayBilling;
 import com.ivianuu.rxplaybilling.model.Response;
+import com.ivianuu.rxplaybilling.model.SkuDetailsResponse;
+
+import io.reactivex.functions.Consumer;
 
 public class MainActivity extends AppCompatActivity {
 

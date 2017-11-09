@@ -35,9 +35,7 @@ public final class QueryPurchasesNetworkSingle extends BaseSingle<PurchasesRespo
     @Override
     public void subscribe(final SingleEmitter<PurchasesResponse> e) throws Exception {
         billingClient.queryPurchaseHistoryAsync(skuType, (responseCode, purchasesList) -> {
-            if (!e.isDisposed()) {
-                e.onSuccess(new PurchasesResponse(purchasesList, responseCode));
-            }
+            e.onSuccess(new PurchasesResponse(purchasesList, responseCode));
         });
     }
 }

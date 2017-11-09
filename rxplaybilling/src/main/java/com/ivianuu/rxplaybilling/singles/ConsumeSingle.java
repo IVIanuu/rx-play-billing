@@ -35,9 +35,7 @@ public final class ConsumeSingle extends BaseSingle<ConsumeResponse> {
     @Override
     public void subscribe(final SingleEmitter<ConsumeResponse> e) throws Exception {
         billingClient.consumeAsync(purchaseToken, (purchaseToken, resultCode) -> {
-            if (!e.isDisposed()) {
-                e.onSuccess(new ConsumeResponse(resultCode, purchaseToken));
-            }
+            e.onSuccess(new ConsumeResponse(resultCode, purchaseToken));
         });
     }
 }
