@@ -1,16 +1,17 @@
 apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
 apply plugin: 'com.github.dcendents.android-maven'
 
 group='com.github.ivianuu'
 
 android {
-    compileSdkVersion rootProject.ext.compileSdkVersion
+    compileSdkVersion Versions.compileSdk
 
     defaultConfig {
-        minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
+        minSdkVersion Versions.minSdk
+        targetSdkVersion Versions.targetSdk
     }
-
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -18,14 +19,10 @@ android {
 }
 
 dependencies {
-    // Android Support
-    api rootProject.ext.supportAnnotations
-
-    // PlayBilling
-    api rootProject.ext.playBilling
-
-    // RxJava
-    api rootProject.ext.rxJava
+    compileOnly Deps.billingX
+    compileOnly Deps.playBilling
+    api Deps.kotlinStdLib
+    api Deps.rxJava
 }
 
 // build a jar with source files

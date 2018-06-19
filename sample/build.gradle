@@ -1,27 +1,33 @@
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
 
 android {
-    compileSdkVersion rootProject.ext.compileSdkVersion
+    compileSdkVersion Versions.compileSdk
 
     defaultConfig {
         applicationId "com.ivianuu.rxplaybilling.sample"
-        minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        minSdkVersion Versions.minSdkSample
+        targetSdkVersion Versions.targetSdk
+        versionCode Versions.versionCode
+        versionName Versions.versionName
     }
-
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    androidExtensions {
+        experimental = true
+    }
 }
 
 dependencies {
-    // Android Support
-    implementation rootProject.ext.supportAppCompat
-
-    // RxPlayBilling
+    implementation Deps.supportAppCompat
     implementation project(':rxplaybilling')
+
+    implementation Deps.rxAndroid
+
+    debugImplementation Deps.billingX
+    releaseImplementation Deps.playBilling
 }
 
