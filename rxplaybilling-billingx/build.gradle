@@ -19,9 +19,9 @@ android {
 }
 
 dependencies {
-    api Deps.playBilling
-    api Deps.kotlinStdLib
-    api Deps.rxJava
+    api project(":rxplaybilling")
+    api Deps.billingX
+    api Deps.constraintLayout // todo remove once fixed
 }
 
 // build a jar with source files

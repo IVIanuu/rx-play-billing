@@ -4,11 +4,17 @@ import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingFlowParams
-import com.ivianuu.rxplaybilling.*
+import com.ivianuu.rxplaybilling.BillingResponse
+import com.ivianuu.rxplaybilling.ConnectionResult
+import com.ivianuu.rxplaybilling.ConsumeResult
+import com.ivianuu.rxplaybilling.DefaultBillingClientFactory
+import com.ivianuu.rxplaybilling.PurchaseResult
+import com.ivianuu.rxplaybilling.RxPlayBilling
+import com.ivianuu.rxplaybilling.RxPlayBillingPlugins
+import com.ivianuu.rxplaybilling.SkuType
 import com.ivianuu.rxplaybilling.ext.filterSuccess
 import com.ivianuu.rxplaybilling.ext.setType
 import com.pixite.android.billingx.BillingStore
-import com.pixite.android.billingx.DebugBillingClient
 import com.pixite.android.billingx.SkuDetailsBuilder
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -29,11 +35,11 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        rxPlayBilling = if (BuildConfig.DEBUG) {
-            RxPlayBilling.create(DebugBillingClient.newBuilder(this))
-        } else {
-            RxPlayBilling.create(BillingClient.newBuilder(this))
+        if (BuildConfig.DEBUG) {
+            RxPlayBillingPlugins.defaultBillingClientFactory = DefaultBillingClientFactory()
         }
+
+        rxPlayBilling = RxPlayBilling(this)
 
         setupSkus()
 

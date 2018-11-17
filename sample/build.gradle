@@ -23,11 +23,9 @@ android {
 
 dependencies {
     implementation Deps.supportAppCompat
-    implementation project(':rxplaybilling')
+    releaseImplementation project(':rxplaybilling')
+    debugImplementation project(":rxplaybilling-billingx")
 
     implementation Deps.rxAndroid
-
-    debugImplementation Deps.billingX
-    releaseImplementation Deps.playBilling
 }
 

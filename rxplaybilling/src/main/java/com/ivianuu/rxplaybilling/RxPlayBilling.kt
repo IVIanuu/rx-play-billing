@@ -2,10 +2,10 @@ package com.ivianuu.rxplaybilling
 
 import android.app.Activity
 import android.content.Context
-import com.android.billingclient.api.*
-import com.android.billingclient.api.BillingClient.Builder
-import com.android.billingclient.api.BillingClient.newBuilder
-import com.pixite.android.billingx.DebugBillingClient
+import com.android.billingclient.api.BillingClientStateListener
+import com.android.billingclient.api.BillingFlowParams
+import com.android.billingclient.api.PurchasesUpdatedListener
+import com.android.billingclient.api.SkuDetailsParams
 import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.subjects.PublishSubject
@@ -13,15 +13,16 @@ import io.reactivex.subjects.PublishSubject
 /**
  * @author Manuel Wrage (IVIanuu)
  */
-class RxPlayBilling {
+class RxPlayBilling(
+    context: Context,
+    billingClientFactory: BillingClientFactory = RxPlayBillingPlugins.defaultBillingClientFactory
+) {
 
     val isReady get() = billingClient.isReady
 
     val purchaseUpdates: Observable<PurchasesUpdatedResult>
         get() = _purchaseUpdates
     private val _purchaseUpdates = PublishSubject.create<PurchasesUpdatedResult>()
-
-    private val billingClient: BillingClient
 
     private val purchaseUpdatesListener =
         PurchasesUpdatedListener { responseCode, purchases ->
@@ -38,17 +39,9 @@ class RxPlayBilling {
             }
         }
 
-    private constructor(billingClientBuilder: Builder) {
-        billingClient = billingClientBuilder
-            .setListener(purchaseUpdatesListener)
-            .build()
-    }
-
-    private constructor(debugBillingClientBuilder: DebugBillingClient.DebugBillingClientBuilder) {
-        billingClient = debugBillingClientBuilder
-            .setListener(purchaseUpdatesListener)
-            .build()
-    }
+    private val billingClient = billingClientFactory.createBillingClient(
+        context, purchaseUpdatesListener
+    )
 
     fun connect(): Single<ConnectionResult> {
         if (billingClient.isReady) {
@@ -157,19 +150,6 @@ class RxPlayBilling {
                 e.onSuccess(result)
             }
         }
-    }
-
-    companion object {
-
-        fun create(context: Context) =
-            create(newBuilder(context))
-
-        fun create(billingClientBuilder: BillingClient.Builder) =
-            RxPlayBilling(billingClientBuilder)
-
-        fun create(billingClientBuilder: DebugBillingClient.DebugBillingClientBuilder) =
-            RxPlayBilling(billingClientBuilder)
-
     }
 
 }

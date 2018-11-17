@@ -2,9 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/RxPlayBilling.iml" filepath="$PROJECT_DIR$/RxPlayBilling.iml" />
+      <module fileurl="file://$PROJECT_DIR$/PlayBillingX.iml" filepath="$PROJECT_DIR$/PlayBillingX.iml" />
       <module fileurl="file://$PROJECT_DIR$/buildSrc/buildSrc.iml" filepath="$PROJECT_DIR$/buildSrc/buildSrc.iml" />
       <module fileurl="file://$PROJECT_DIR$/rxplaybilling/rxplaybilling.iml" filepath="$PROJECT_DIR$/rxplaybilling/rxplaybilling.iml" />
+      <module fileurl="file://$PROJECT_DIR$/rxplaybilling-billingx/rxplaybilling-billingx.iml" filepath="$PROJECT_DIR$/rxplaybilling-billingx/rxplaybilling-billingx.iml" />
       <module fileurl="file://$PROJECT_DIR$/sample/sample.iml" filepath="$PROJECT_DIR$/sample/sample.iml" />
     </modules>
   </component>
