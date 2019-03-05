@@ -18,7 +18,7 @@ class RxPlayBilling(
     billingClientFactory: BillingClientFactory = RxPlayBillingPlugins.defaultBillingClientFactory
 ) {
 
-    val isReady get() = billingClient.isReady
+    val isReady: Boolean get() = billingClient.isReady
 
     val purchaseUpdates: Observable<PurchasesUpdatedResult>
         get() = _purchaseUpdates
@@ -26,7 +26,7 @@ class RxPlayBilling(
 
     private val purchaseUpdatesListener =
         PurchasesUpdatedListener { responseCode, purchases ->
-            val billingResponse = responseCode.toBillingResponseEnum()
+            val billingResponse = responseCode.toBillingResponse()
             if (billingResponse == BillingResponse.OK) {
                 _purchaseUpdates.onNext(
                     PurchasesUpdatedResult.Success(
@@ -52,7 +52,7 @@ class RxPlayBilling(
             billingClient.startConnection(object : BillingClientStateListener {
                 override fun onBillingSetupFinished(responseCode: Int) {
                     if (e.isDisposed) return
-                    val billingResponse = responseCode.toBillingResponseEnum()
+                    val billingResponse = responseCode.toBillingResponse()
                     val result = if (billingResponse == BillingResponse.OK) {
                         ConnectionResult.Success(billingResponse)
                     } else {
@@ -79,7 +79,7 @@ class RxPlayBilling(
         return Single.create { e ->
             billingClient.consumeAsync(purchaseToken) { responseCode, _purchaseToken ->
                 if (e.isDisposed) return@consumeAsync
-                val billingResponse = responseCode.toBillingResponseEnum()
+                val billingResponse = responseCode.toBillingResponse()
                 val result = if (billingResponse == BillingResponse.OK) {
                     ConsumeResult.Success(billingResponse, _purchaseToken)
                 } else {
@@ -93,7 +93,7 @@ class RxPlayBilling(
 
     fun launchBillingFlow(activity: Activity, params: BillingFlowParams): Single<PurchaseResult> {
         val responseCode = billingClient.launchBillingFlow(activity, params)
-        val billingResponse = responseCode.toBillingResponseEnum()
+        val billingResponse = responseCode.toBillingResponse()
         val result = if (billingResponse == BillingResponse.OK) {
             PurchaseResult.Success(billingResponse)
         } else {
@@ -105,7 +105,7 @@ class RxPlayBilling(
     fun queryPurchases(skuType: SkuType): Single<QueryPurchasesResult> {
         val realResult = billingClient.queryPurchases(skuType.value)
 
-        val billingResponse = realResult.responseCode.toBillingResponseEnum()
+        val billingResponse = realResult.responseCode.toBillingResponse()
 
         val result = if (billingResponse == BillingResponse.OK) {
             QueryPurchasesResult.Success(billingResponse, realResult.purchasesList)
@@ -121,7 +121,7 @@ class RxPlayBilling(
             billingClient.queryPurchaseHistoryAsync(skuType.value) { responseCode, purchasesList ->
                 if (e.isDisposed) return@queryPurchaseHistoryAsync
 
-                val billingResponse = responseCode.toBillingResponseEnum()
+                val billingResponse = responseCode.toBillingResponse()
 
                 val result = if (billingResponse == BillingResponse.OK) {
                     QueryPurchasesResult.Success(billingResponse, purchasesList!!)
@@ -139,7 +139,7 @@ class RxPlayBilling(
             billingClient.querySkuDetailsAsync(params) { responseCode, skuDetailsList ->
                 if (e.isDisposed) return@querySkuDetailsAsync
 
-                val billingResponse = responseCode.toBillingResponseEnum()
+                val billingResponse = responseCode.toBillingResponse()
 
                 val result = if (billingResponse == BillingResponse.OK) {
                     QuerySkuDetailsResult.Success(billingResponse, skuDetailsList!!)

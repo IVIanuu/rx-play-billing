@@ -7,6 +7,6 @@ enum class SkuType(val value: String) {
     SUBS(BillingClient.SkuType.SUBS)
 }
 
-fun String.toSkuTypeEnum() =
+fun String.toSkuType(): SkuType =
     SkuType.values().firstOrNull { it.value == this }
-            ?: throw IllegalArgumentException("unknown sku type $this")
+        ?: error("unknown sku type $this")

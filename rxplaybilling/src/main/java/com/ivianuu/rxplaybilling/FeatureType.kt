@@ -9,7 +9,7 @@ enum class FeatureType(val value: String) {
     SUBSCRIPTIONS_ON_VR(BillingClient.FeatureType.SUBSCRIPTIONS_ON_VR)
 }
 
-fun String.toFeatureTypeEnum() =
+fun String.toFeatureType(): FeatureType =
     FeatureType.values()
         .firstOrNull { it.value == this }
-            ?: throw IllegalArgumentException("unknown feature type $this")
+        ?: error("unknown feature type $this")

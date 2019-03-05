@@ -16,6 +16,7 @@ interface BillingClientFactory {
         context: Context,
         listener: PurchasesUpdatedListener
     ): BillingClient
+
 }
 
 /**
@@ -26,7 +27,10 @@ class DefaultBillingClientFactory : BillingClientFactory {
     override fun createBillingClient(
         context: Context,
         listener: PurchasesUpdatedListener
-    ): BillingClient = BillingClient.newBuilder(context)
-        .setListener(listener)
-        .build()
+    ): BillingClient {
+        return BillingClient.newBuilder(context)
+            .setListener(listener)
+            .build()
+    }
+
 }

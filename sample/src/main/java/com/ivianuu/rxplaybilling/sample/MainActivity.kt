@@ -1,7 +1,7 @@
 package com.ivianuu.rxplaybilling.sample
 
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingFlowParams
 import com.ivianuu.rxplaybilling.BillingResponse
@@ -9,11 +9,12 @@ import com.ivianuu.rxplaybilling.ConnectionResult
 import com.ivianuu.rxplaybilling.ConsumeResult
 import com.ivianuu.rxplaybilling.DefaultBillingClientFactory
 import com.ivianuu.rxplaybilling.PurchaseResult
+import com.ivianuu.rxplaybilling.QueryPurchasesResult
 import com.ivianuu.rxplaybilling.RxPlayBilling
 import com.ivianuu.rxplaybilling.RxPlayBillingPlugins
 import com.ivianuu.rxplaybilling.SkuType
-import com.ivianuu.rxplaybilling.ext.filterSuccess
-import com.ivianuu.rxplaybilling.ext.setType
+import com.ivianuu.rxplaybilling.defaultBillingClientFactory
+import com.ivianuu.rxplaybilling.setType
 import com.pixite.android.billingx.BillingStore
 import com.pixite.android.billingx.SkuDetailsBuilder
 import io.reactivex.Single
@@ -21,7 +22,8 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.functions.Consumer
 import io.reactivex.subjects.PublishSubject
-import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.activity_main.consume
+import kotlinx.android.synthetic.main.activity_main.purchase
 
 class MainActivity : AppCompatActivity() {
 
@@ -35,9 +37,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        if (BuildConfig.DEBUG) {
-            RxPlayBillingPlugins.defaultBillingClientFactory = DefaultBillingClientFactory()
-        }
+        RxPlayBillingPlugins.defaultBillingClientFactory = DefaultBillingClientFactory()
 
         rxPlayBilling = RxPlayBilling(this)
 
@@ -75,19 +75,15 @@ class MainActivity : AppCompatActivity() {
         consume.clicks()
             .flatMapMaybe {
                 rxPlayBilling.queryPurchases(SkuType.IN_APP)
-                    .filterSuccess()
+                    .filter { it is QueryPurchasesResult.Success }
+                    .cast(QueryPurchasesResult.Success::class.java)
                     .map { it.purchases.firstOrNull { it.sku == SKU_TEST }?.purchaseToken ?: "" }
                     .filter(String::isNotEmpty)
             }
             .flatMapSingle {
-                if (BuildConfig.DEBUG) {
-                    // todo remove this when billingx implements this function
-                    BillingStore.defaultStore(this).removePurchase(SKU_TEST)
-                    Single.just(ConsumeResult.Success(BillingResponse.OK, "???"))
-                        .doOnSuccess { consumed.onNext(Unit) }
-                } else {
-                    rxPlayBilling.consume(it)
-                }
+                BillingStore.defaultStore(this).removePurchase(SKU_TEST)
+                Single.just(ConsumeResult.Success(BillingResponse.OK, "???"))
+                    .doOnSuccess { consumed.onNext(Unit) }
             }
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe {
@@ -135,7 +131,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupSkus() {
-        if (!BuildConfig.DEBUG) return
         val billingStore = BillingStore.defaultStore(this)
 
         billingStore.addProduct(

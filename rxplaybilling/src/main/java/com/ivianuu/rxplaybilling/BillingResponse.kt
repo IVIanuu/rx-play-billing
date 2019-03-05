@@ -16,7 +16,7 @@ enum class BillingResponse(val value: Int) {
     ITEM_NOT_OWNED(BillingClient.BillingResponse.ITEM_NOT_OWNED)
 }
 
-fun Int.toBillingResponseEnum() =
+fun Int.toBillingResponse(): BillingResponse =
     BillingResponse.values()
         .firstOrNull { it.value == this }
-            ?: throw IllegalArgumentException("unknown billing response $this")
+        ?: error("unknown billing response $this")
