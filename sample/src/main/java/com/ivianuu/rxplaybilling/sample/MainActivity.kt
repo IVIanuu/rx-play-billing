@@ -78,7 +78,7 @@ class MainActivity : AppCompatActivity() {
                     .filter { it is QueryPurchasesResult.Success }
                     .cast(QueryPurchasesResult.Success::class.java)
                     .map { it.purchases.firstOrNull { it.sku == SKU_TEST }?.purchaseToken ?: "" }
-                    .filter(String::isNotEmpty)
+                    .filter { it.isNotEmpty() }
             }
             .flatMapSingle {
                 BillingStore.defaultStore(this).removePurchase(SKU_TEST)
